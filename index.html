@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Il mio piano">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <title>Il mio piano</title>
 <style>
 /* VOICE: calma, da app di sistema iPhone; numeri grandi, poche parole
@@ -745,8 +752,19 @@ function settingsSheet(){
   const cust=[...S.customPrimi.map(c=>['primo',c]),...S.customContorni.map(c=>['contorno',c])];
   if(cust.length)h+=`<div class="cat">I tuoi piatti della mensa</div><div class="list plain">`+cust.map(([k,c])=>`<div class="li"><span class="main"><div class="tt">${esc(c.name)}</div><div class="st">${k}, ${r0(c.m[0])} kcal</div></span><button class="btn danger" data-a="delCustom" data-v="${esc(c.id)}">Elimina</button></div>`).join('')+`</div>`;
   h+=`<button class="btn full" style="margin-top:12px" data-a="resetSet">Ripristina valori iniziali</button>
-  <div class="small muted" style="margin:14px 4px 0">${cloud.status==='cloud'?'Dati salvati sul tuo account Claude.':'Dati salvati solo su questo dispositivo.'}</div>`;
+  <div class="cat">I tuoi dati</div>
+  <div class="list plain">
+  <button class="li tap" data-a="exportData"><span class="main"><div class="tt">Copia i miei dati</div><div class="st">Per portarli in un'altra versione dell'app</div></span>${CHEV}</button>
+  <button class="li tap" data-a="importSheet"><span class="main"><div class="tt">Importa dati</div><div class="st">Incolla i dati copiati dall'altra versione</div></span>${CHEV}</button>
+  </div>
+  <div class="small muted" style="margin:14px 4px 0">${cloud.status==='cloud'?'Dati salvati sul tuo account Claude.':'Dati salvati su questo dispositivo.'}</div>`;
   return h;
+}
+function importSheet(){
+  return `<h2>Importa dati</h2><div class="muted small" style="margin:0 4px">Nell'altra versione dell'app apri le impostazioni, tocca "Copia i miei dati", poi incolla qui. I dati di questa app verranno sostituiti.</div>
+  <textarea id="impText" rows="8" style="width:100%;margin-top:12px;border:0;border-radius:12px;padding:12px;font-size:14px" placeholder="Incolla qui i dati"></textarea>
+  <div id="impMsg" class="small" style="margin:8px 4px 0;color:var(--red)"></div>
+  <button class="btn pri full" style="margin-top:14px" data-a="doImport">Importa</button>`;
 }
 function customSheet(){
   return `<h2>Aggiungi un piatto</h2><div class="muted small" style="margin:0 4px">Dagli un nome e scegli il piatto che gli somiglia di più: prendo i suoi valori.</div>
@@ -848,6 +866,17 @@ document.addEventListener('click',async ev=>{
       try{await navigator.clipboard.writeText(txt);toast('Lista copiata')}catch(e){openSheet(()=>`<h2>Lista della spesa</h2><div class="muted small" style="margin:0 4px">Tieni premuto per selezionare e copiare.</div><textarea rows="16" style="width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px">${esc(txt)}</textarea>`)}
       break}
     case 'recFilter':recFilter=v;render();break;
+    case 'exportData':{
+      const txt=JSON.stringify(S);
+      try{await navigator.clipboard.writeText(txt);toast('Dati copiati')}
+      catch(e){openSheet(()=>`<h2>I miei dati</h2><div class="muted small" style="margin:0 4px">Tieni premuto, seleziona tutto e copia.</div><textarea rows="10" style="width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;font-size:13px" readonly>${esc(txt)}</textarea>`)}
+      break}
+    case 'importSheet':openSheet(importSheet);break;
+    case 'doImport':{
+      const raw=($('#impText')||{}).value||'';let o=null;
+      try{o=JSON.parse(raw.trim())}catch(e){}
+      if(!o||o.v!==1||typeof o.set!=='object'){$('#impMsg').textContent='Questi non sembrano i dati dell\'app: ricopiali e riprova.';break}
+      S=Object.assign(freshState(),o);migrate();save();closeSheet();render();toast('Dati importati');break}
     case 'resetSet':S.set={...DEFAULT_SET,k150:true,m30:true,s0:true,p130:true};closeSheet();commit('Valori ripristinati');break;
   }
 });
@@ -883,6 +912,9 @@ function handleForm(f){
 
 render();
 initCloud();
+if('serviceWorker' in navigator&&location.protocol==='https:'&&!window.claude){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
 }
 </script>
 </body>
