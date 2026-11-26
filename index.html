@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Il mio piano">
@@ -29,9 +29,9 @@
 }
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Roboto,sans-serif;overflow-x:clip}
+html,body{margin:0;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg);color:var(--ink);font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Roboto,sans-serif;overflow-x:clip}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
+button{cursor:pointer;touch-action:manipulation}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .wrap{max-width:600px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 110px)}
 .navbar{position:fixed;top:0;left:0;right:0;z-index:6;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;text-align:center;font-weight:600;font-size:17px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);border-bottom:.5px solid var(--line);opacity:0;pointer-events:none;transition:opacity .18s}
@@ -893,6 +893,8 @@ document.addEventListener('change',ev=>{
 document.addEventListener('input',ev=>{if(ev.target.id==='rq'){recQuery=ev.target.value;const pos=ev.target.selectionStart;render();const i=$('#rq');if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(e){}}}});
 document.addEventListener('submit',ev=>{ev.preventDefault();handleForm(ev.target)});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeSheet();if(ev.key==='Enter'&&ev.target.tagName==='INPUT'&&ev.target.form){ev.preventDefault();handleForm(ev.target.form)}});
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
 window.addEventListener('scroll',()=>{$('#navbar').classList.toggle('on',window.scrollY>50)},{passive:true});
 function handleForm(f){
   if(!f)return;const fd=Object.fromEntries(new FormData(f).entries()),fid=f.getAttribute('id');
